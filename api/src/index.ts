@@ -1,7 +1,16 @@
+//Apollo
 import { ApolloServer, gql, IResolvers } from 'apollo-server'
+
+//Data
+import pokemon from './pokemon.json'
+
+//External Utils
 import sortBy from 'lodash/sortBy'
 import find from 'lodash/find'
-import pokemon from './pokemon.json'
+import filter from 'lodash/filter'
+
+//Internal Utils
+import {firstSyllableCheck} from './utils/utils';
 
 interface Pokemon {
   id: string
@@ -36,8 +45,9 @@ const typeDefs = gql`
     candyCount: Int
   }
 
-  type Query {
-    pokemonMany(skip: Int, limit: Int): [Pokemon!]!
+  type Query {   
+    pokemonFilterByName(name: String): [Pokemon!]!
+    pokemonMany(skip: Int, limit: Int, filterValues: [String]): [Pokemon!]!
     pokemonOne(id: ID!): Pokemon
   }
 `
@@ -60,14 +70,29 @@ const resolvers: IResolvers<any, any> = {
     },
   },
   Query: {
+    pokemonFilterByName(_, { name }: { name: string }): Pokemon[] {
+      return filter(pokemon, currentPokemon => firstSyllableCheck(name, currentPokemon.name));
+    },
     pokemonMany(
       _,
-      { skip = 0, limit = 999 }: { skip?: number; limit?: number }
-    ): Pokemon[] {
-      return sortBy(pokemon, poke => parseInt(poke.id, 10)).slice(
-        skip,
-        limit + skip
-      )
+      { skip = 0, limit = 999, filterValues }: { skip?: number; limit?: number; filterValues?: string[] }
+    ): Pokemon[] 
+    {
+
+        if (filterValues === undefined) {
+        return sortBy(pokemon, poke => parseInt(poke.id, 10)).slice(
+          skip,
+          limit + skip
+        )
+      } else {
+        return filter(pokemon, currentPokemon => {
+          let typesWeaknessCombinedArr = [...currentPokemon.types, ...currentPokemon.weaknesses]; 
+          
+          const isContainedInTypesOrWeaknesses = (filterValue: string) => typesWeaknessCombinedArr.includes(filterValue);
+          
+          return filterValues.every(isContainedInTypesOrWeaknesses);  
+        })
+      }
     },
     pokemonOne(_, { id }: { id: string }): Pokemon {
       return (pokemon as Record<string, Pokemon>)[id]

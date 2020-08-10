@@ -1,37 +1,8 @@
 import React from 'react'
-import styled from 'styled-components'
 import { RouteComponentProps, Link } from '@reach/router'
 import { useQuery, gql } from '@apollo/client'
-import { Container as NesContainer } from 'nes-react'
+import PokemonList from '../../components/PokemonList'
 
-const Container = styled(NesContainer)`
-  && {
-    background: white;
-    margin: 2rem 25%;
-
-    ::after {
-      z-index: unset;
-      pointer-events: none;
-    }
-  }
-`
-
-const List = styled.ul`
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-end;
-`
-
-const ListItem = styled.li`
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-bottom: 1rem;
-
-  > *:first-child {
-    margin-right: 1rem;
-  }
-`
 
 const POKEMON_MANY = gql`
   query($skip: Int, $limit: Int) {
@@ -44,35 +15,110 @@ const POKEMON_MANY = gql`
   }
 `
 
-const Pokemon: React.FC<RouteComponentProps & { clickLink: Function }> = ({
-  clickLink,
+const POKEMON_SEARCH_BY_NAME = gql`
+  query($searchValue: String) {
+    pokemonFilterByName(name: $searchValue) {
+      id
+      name
+      num
+      img
+    }
+  }
+`
+
+const POKEMON_FILTER_BY_TYPES_AND_WEAKNESSES = gql`
+  query($searchValue: [String]) {
+    pokemonMany(filterValues: $searchValue) {
+       id
+       name
+       num
+       img
+     }
+   }  
+`
+
+
+const PokemonMany: React.FC<{clickLink: Function}> = ({
+  clickLink
 }) => {
+
+  //all Pokemon
   const { loading, error, data } = useQuery(POKEMON_MANY)
+  
   const pokemonList:
     | Array<{ id: string; name: string; img: string; num: string }>
     | undefined = data?.pokemonMany
-
-  if (loading) {
-    return <p>Loading...</p>
-  }
-  if (error || !pokemonList) {
-    return <p>Error!</p>
-  }
-
+  
   return (
-    <Container rounded>
-      <List>
-        {pokemonList.map(pokemon => (
-          <Link to={pokemon.id} onMouseDown={clickLink as any}>
-            <ListItem>
-              <img src={pokemon.img} />
-              {pokemon.name} - {pokemon.num}
-            </ListItem>
-          </Link>
-        ))}
-      </List>
-    </Container>
+    <PokemonList 
+    clickLink={clickLink}
+    pokemonList={pokemonList}
+    loading={loading}
+    error={error}
+    />
   )
+}
+
+const PokemonSearch: React.FC<{clickLink: Function, searchValue: any}> = ({
+  clickLink,
+  searchValue
+}) => {
+
+    //search by name
+    const { loading, error, data } = useQuery(POKEMON_SEARCH_BY_NAME, {variables: {searchValue}})
+  
+  const pokemonList:
+    | Array<{ id: string; name: string; img: string; num: string }>
+    | undefined = data?.pokemonFilterByName
+    
+    return (
+      <PokemonList 
+      clickLink={clickLink}
+      pokemonList={pokemonList}
+      loading={loading}
+      error={error}
+      />
+    )
+  
+}
+
+const PokemonFilter: React.FC<{clickLink: Function, searchValue: any}> = ({
+  clickLink,
+  searchValue
+}) => {
+
+  //filter by types & weaknesses
+  const { loading, error, data } = useQuery(POKEMON_FILTER_BY_TYPES_AND_WEAKNESSES, {variables: {searchValue}})
+  
+      const pokemonList:
+        | Array<{ id: string; name: string; img: string; num: string }>
+        | undefined = data?.pokemonMany
+        
+        return (
+          <PokemonList 
+          clickLink={clickLink}
+          pokemonList={pokemonList}
+          loading={loading}
+          error={error}
+          />          
+        )
+}
+
+  const Pokemon: React.FC<RouteComponentProps & { clickLink: Function}> = ({
+    clickLink,
+    location
+  }) => {
+
+  const {searchValue} = location?.state as any;
+
+  if (searchValue === "All") {
+    return <PokemonMany clickLink={clickLink} />;
+  } else if (typeof searchValue === "string") {
+    return <PokemonSearch clickLink={clickLink} searchValue={searchValue} />;
+  } else {
+    return <PokemonFilter clickLink={clickLink} searchValue={searchValue} />;
+  }
+
 }
 
 export default Pokemon

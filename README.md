@@ -14,7 +14,23 @@ To run the UI and the API locally, just run `yarn start` or `yarn dev` from both
 
 _Note: In order to avoid any discrepancies running the dev servers, please make sure you're using Node ^12.8.0._
 
-## The Tasks
+
+
+
+# User Story: 
+As a USER I WANT TO to be able to search for Pokemon via a search field and also filter results based on types and weaknesses via checkboxes SO THAT I can choose a custom set of Pokemon that are returned.
+
+
+# Acceptance Criteria:
+Searching
+1. Build out a search box that makes search queries to the API
+2. Implement a fuzzy search resolver in the API
+
+Filtering
+1. Build out filter checkboxes or dropdowns or menus that add filter arguments to your pokemonMany query to the API
+2. Implement filtering on the pokemonMany query within the API, handling both types and weaknesses filters
+
+## Use Case Details
 
 1. Implement Searching on the UI & API
 
@@ -28,10 +44,59 @@ _Note: In order to avoid any discrepancies running the dev servers, please make 
 - Build out filter checkboxes or dropdowns or menus that add filter arguments to your `pokemonMany` query to the API
 - Implement filtering on the `pokemonMany` query within the API, handling both `types` and `weaknesses` filters
 
-# Tips
+# UX Notes: 
+Don't focus too much on UX or pretty design. Focus more on meeting the Acceptance Criteria and writing clean code.
 
-Here's some tips you might find handy:
+# Technical Direction:
+Implement solutions that are adhere to the Functional Programming paradigm. Make sure functions are pure and avoid mutating objects.
 
-- If you use an IDE like VS Code or Atom, install the ESLint and Prettier extensions. They help development a _lot!_
-- Don't focus too much on UX or pretty design. Focus more on meeting the Acceptance Criteria and writing clean code.
-- We're fans of the Functional Programming paradigm. As you code, thinking about how you can make your functions pure and avoid mutating objects.
+# Developer Notes for Reviewers:
+## API
+### api/src/index.ts: 
+- Imported helper function to support search 
+- Implemented a fuzzy search resolver via pokemonFilterByName query 
+- Added filter to pokemonMany query 
+- Throughout changes utilized non-mutating methods
+
+- Next steps: Search and filter meet the Acceptance Criteria, however I would next discuss with team whether we want to use a library or build out a more robust search and filter logic
+    - After doing research, syllable focused filtering for search added the most value to start, however there are other robust features we could implement using Levenshtein distance and / or phonetic algorithms
+
+### api/src/utils/utils.ts: 
+- Created utility method to abstract away fuzzy search implementation details
+- [Add pros cons to approach, fulfilled A/C, next steps]
+
+
+## UI
+### ui/src/screens/Home.tsx:
+- Imported helper function to support titlecasing
+- Implemented local state tracking for:
+    - search field
+    - filter values array
+
+    - type and weakness checkboxes:
+        - flying
+        - fire
+        - water
+        - electric
+
+- Handle change functions for search and filter
+- Added state to reach router navigate function for the three user flows:
+    - Return all pokemon
+    - Return pokemon using search filter
+    - Return pokemon using types and weaknesses checkbox filters
+
+- Added search input field and button
+- Added types and weaknesses checkbox inputs and button
+
+### ui/src/screens/pokemon/Pokemon.tsx:
+- added POKEMON_SEARCH_BY_NAME & POKEMON_FILTER_BY_TYPES_AND_WEAKNESSES queries
+- Modularized views for all, search, filter
+- Created reusable view component -> PokemonList
+
+- Next steps: discuss with team longer term architecture and if we want to implement a container & view component organizational structure
+
+### ui/src/components/PokemonList.tsx
+- Created reusable view component -> PokemonList
+
+### ui/src/utils/utils.ts:
+- Titlecasing helper util
