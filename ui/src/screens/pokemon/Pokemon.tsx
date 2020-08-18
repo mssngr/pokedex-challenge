@@ -27,8 +27,14 @@ const POKEMON_SEARCH_BY_NAME = gql`
 `
 
 const POKEMON_FILTER_BY_TYPES_AND_WEAKNESSES = gql`
-  query($searchValue: [String]) {
-    pokemonMany(filterValues: $searchValue) {
+    query(
+      $typeSearchValues: [String]
+    , $weaknessSearchValues: [String]
+    ) {
+      pokemonMany(
+      typeFilterValues: $typeSearchValues
+    , weaknessFilterValues: $weaknessSearchValues
+      ) {
        id
        name
        num
@@ -42,13 +48,14 @@ const PokemonMany: React.FC<{clickLink: Function}> = ({
   clickLink
 }) => {
 
-  //all Pokemon
   const { loading, error, data } = useQuery(POKEMON_MANY)
   
   const pokemonList:
     | Array<{ id: string; name: string; img: string; num: string }>
     | undefined = data?.pokemonMany
   
+//Review note: Made PokemonList into reusable component    
+//Please see further notes / user story / acceptance criteria in README
   return (
     <PokemonList 
     clickLink={clickLink}
@@ -64,7 +71,6 @@ const PokemonSearch: React.FC<{clickLink: Function, searchValue: any}> = ({
   searchValue
 }) => {
 
-    //search by name
     const { loading, error, data } = useQuery(POKEMON_SEARCH_BY_NAME, {variables: {searchValue}})
   
   const pokemonList:
@@ -87,8 +93,17 @@ const PokemonFilter: React.FC<{clickLink: Function, searchValue: any}> = ({
   searchValue
 }) => {
 
-  //filter by types & weaknesses
-  const { loading, error, data } = useQuery(POKEMON_FILTER_BY_TYPES_AND_WEAKNESSES, {variables: {searchValue}})
+  const {typeSearchValues, weaknessSearchValues} = searchValue;
+
+  const { loading, error, data } = useQuery(
+    POKEMON_FILTER_BY_TYPES_AND_WEAKNESSES, 
+    {variables: 
+      {
+      "typeSearchValues": typeSearchValues,
+      "weaknessSearchValues": weaknessSearchValues
+      }
+    }
+    )
   
       const pokemonList:
         | Array<{ id: string; name: string; img: string; num: string }>

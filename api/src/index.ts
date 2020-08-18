@@ -1,16 +1,39 @@
-//Apollo
+//apollo
 import { ApolloServer, gql, IResolvers } from 'apollo-server'
 
-//Data
+//data
 import pokemon from './pokemon.json'
 
-//External Utils
+//prepare data for fuse
+const pokemonArrayOfObjects = Object.values(pokemon)
+
+//external utils
 import sortBy from 'lodash/sortBy'
 import find from 'lodash/find'
 import filter from 'lodash/filter'
 
-//Internal Utils
-import {firstSyllableCheck} from './utils/utils';
+//internal utils
+import {typeFilterValuesCheck} from './utils/typeFilter'
+import {weaknessFilterValuesCheck} from './utils/weaknessFilter'
+
+//fuzzy search set up
+//Review note: Chose fuse.js as external tool to implement fuzzy search for following reasons:
+// 1.  Given the scale of the current app, this library is sufficiently powerful:
+//     a. there are multiple options for further configuration such as:
+//         i. case sensitivity
+//         ii. sorting by liklihood of match
+//         iii. pattern location
+//         iv. threshhold to meet for match score
+//     b. as measured by the features dictated in the prompt
+// 2. In addition, it has zero dependencies, which reduces developer time in updating said potential dependencies with other libraries
+// 3. It passes all use cases provided (as well as other logical ones)
+//Please see further notes / user story / acceptance criteria in README
+import Fuse from 'fuse.js'
+const options: any = {
+  keys: ["name"]
+}
+const fuse = new Fuse(pokemonArrayOfObjects, options)
+
 
 interface Pokemon {
   id: string
@@ -47,7 +70,7 @@ const typeDefs = gql`
 
   type Query {   
     pokemonFilterByName(name: String): [Pokemon!]!
-    pokemonMany(skip: Int, limit: Int, filterValues: [String]): [Pokemon!]!
+    pokemonMany(skip: Int, limit: Int, typeFilterValues: [String], weaknessFilterValues: [String]): [Pokemon!]!
     pokemonOne(id: ID!): Pokemon
   }
 `
@@ -70,28 +93,31 @@ const resolvers: IResolvers<any, any> = {
     },
   },
   Query: {
-    pokemonFilterByName(_, { name }: { name: string }): Pokemon[] {
-      return filter(pokemon, currentPokemon => firstSyllableCheck(name, currentPokemon.name));
+    pokemonFilterByName(_, { name }: { name: string }): 
+    Pokemon[] {
+      return fuse.search(name).map(obj => obj.item);
     },
     pokemonMany(
       _,
-      { skip = 0, limit = 999, filterValues }: { skip?: number; limit?: number; filterValues?: string[] }
-    ): Pokemon[] 
+      { skip = 0, limit = 999, typeFilterValues, weaknessFilterValues }: { skip?: number; limit?: number; typeFilterValues?: string[]; weaknessFilterValues?: string[] }
+    ): 
+    Pokemon[] | undefined
     {
-
-        if (filterValues === undefined) {
-        return sortBy(pokemon, poke => parseInt(poke.id, 10)).slice(
-          skip,
-          limit + skip
-        )
-      } else {
-        return filter(pokemon, currentPokemon => {
-          let typesWeaknessCombinedArr = [...currentPokemon.types, ...currentPokemon.weaknesses]; 
-          
-          const isContainedInTypesOrWeaknesses = (filterValue: string) => typesWeaknessCombinedArr.includes(filterValue);
-          
-          return filterValues.every(isContainedInTypesOrWeaknesses);  
-        })
+      //no filters
+        if (typeFilterValues === undefined && weaknessFilterValues === undefined) {
+        return sortBy(pokemon, poke => parseInt(poke.id, 10)).slice(skip, limit + skip)
+      } 
+      //filter for both type and weakness
+      else if (typeFilterValues?.length !== 0 && weaknessFilterValues?.length !== 0) {
+        return filter(pokemon, currentPokemon => typeFilterValuesCheck(typeFilterValues, currentPokemon) && weaknessFilterValuesCheck(weaknessFilterValues, currentPokemon))
+      } 
+      //filter for types only
+        else if (typeFilterValues?.length !== 0) {
+        return filter(pokemon, currentPokemon => typeFilterValuesCheck(typeFilterValues, currentPokemon))
+      } 
+      // //filter for weaknesses only
+        else if (weaknessFilterValues?.length !== 0) {
+        return filter(pokemon, currentPokemon => weaknessFilterValuesCheck(weaknessFilterValues, currentPokemon))
       }
     },
     pokemonOne(_, { id }: { id: string }): Pokemon {

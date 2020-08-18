@@ -24,11 +24,14 @@ As a USER I WANT TO to be able to search for Pokemon via a search field and also
 # Acceptance Criteria:
 Searching
 1. Build out a search box that makes search queries to the API
-2. Implement a fuzzy search resolver in the API
+2. Implement a fuzzy search resolver in the API. (You can use a pre-made library to solve this, but please write out a comment in your code defending your decision of which library.)
 
 Filtering
 1. Build out filter checkboxes or dropdowns or menus that add filter arguments to your pokemonMany query to the API
 2. Implement filtering on the pokemonMany query within the API, handling both types and weaknesses filters
+
+External Libraries:
+You are welcome to use external libraries to complete the challenge. However, please be prepared to defend your decisions and, for each library you add, write a comment in the code explaining your choice.
 
 ## Use Case Details
 
@@ -53,23 +56,31 @@ Implement solutions that are adhere to the Functional Programming paradigm. Make
 # Developer Notes for Reviewers:
 ## API
 ### api/src/index.ts: 
-- Imported helper function to support search 
+- Imported fuse.js library to support search (details on choice in code & here):
+1.  Given the scale of the current app, this library is sufficiently powerful:
+    a. there are multiple options for further configuration such as:
+        i. case sensitivity
+        ii. sorting by liklihood of match
+        iii. pattern location
+        iv. threshhold to meet for match score
+    b. as measured by the features dictated in the prompt
+2. In addition, it has zero dependencies, which reduces developer time in updating said potential dependencies with other libraries
+3. It passes all use cases provided (as well as other logical ones)
+
 - Implemented a fuzzy search resolver via pokemonFilterByName query 
-- Added filter to pokemonMany query 
-- Throughout changes utilized non-mutating methods
+- Added filter arguments to pokemonMany query to enable user to filter by types and weaknesses
+- Throughout changes utilized non-mutating methods following the Functional Programming paradigm
 
-- Next steps: Search and filter meet the Acceptance Criteria, however I would next discuss with team whether we want to use a library or build out a more robust search and filter logic
-    - After doing research, syllable focused filtering for search added the most value to start, however there are other robust features we could implement using Levenshtein distance and / or phonetic algorithms
+- Next steps: Search and filter meet the Acceptance Criteria, however I would next discuss with team our future plans and whether we could want to add additional filtering configuration provide by the fuse.js library such as phonetic algorithms
 
-### api/src/utils/utils.ts: 
-- Created utility method to abstract away fuzzy search implementation details
-- [Add pros cons to approach, fulfilled A/C, next steps]
+### api/src/utils: 
+- Created utility method to abstract away details involved in types & weakness filtering
 
 
 ## UI
 ### ui/src/screens/Home.tsx:
 - Imported helper function to support titlecasing
-- Implemented local state tracking for:
+- Implemented local state tracking hooks for:
     - search field
     - filter values array
 
@@ -87,13 +98,17 @@ Implement solutions that are adhere to the Functional Programming paradigm. Make
 
 - Added search input field and button
 - Added types and weaknesses checkbox inputs and button
+- Created reusable view component -> InputForm
 
 ### ui/src/screens/pokemon/Pokemon.tsx:
 - added POKEMON_SEARCH_BY_NAME & POKEMON_FILTER_BY_TYPES_AND_WEAKNESSES queries
 - Modularized views for all, search, filter
 - Created reusable view component -> PokemonList
 
-- Next steps: discuss with team longer term architecture and if we want to implement a container & view component organizational structure
+- Next steps: discuss with team longer term architecture and if we want to further implement a container & view component organizational structure
+
+### ui/src/components/InputForm.tsx
+- Created reusable view component -> InputForm
 
 ### ui/src/components/PokemonList.tsx
 - Created reusable view component -> PokemonList

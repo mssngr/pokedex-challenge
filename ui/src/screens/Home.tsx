@@ -2,11 +2,13 @@ import React from 'react'
 import styled from 'styled-components'
 import Sound from 'react-sound'
 import { navigate } from '@reach/router'
-import { Button } from 'nes-react'
 import { RouteComponentProps } from '@reach/router'
-import {toTitleCase} from '../utils/utils';
 
-const NesButton = Button as any
+//components
+import InputForm from '../components/InputForm'
+
+//internal utils
+import {toTitleCase} from '../utils/utils';
 
 const Container = styled.div`
   flex: 1;
@@ -23,78 +25,66 @@ const Home: React.FC<RouteComponentProps> = () => {
   //search field state
   const [searchValue, setSearchValue] = React.useState("")
 
-  //filter values state
-  const initialFilterValues: string[] = [];
-  const [filterValues, setFilterValues] = React.useState(initialFilterValues)
-  
+  //checkbox values state to filter searches
+  const initialTypeFilterValues: string[] = [];
+  const initialWeaknessFilterValues: string[] = [];
+
+  const [typeFilterValues, setTypeFilterValues] = React.useState(initialTypeFilterValues)
+  const [weaknessFilterValues, setWeaknessFilterValues] = React.useState(initialWeaknessFilterValues)
+
   //checkbox state
-  const [flyingChecked, setFlyingIsChecked] = React.useState(false)
-  const [fireChecked, setFireIsChecked] = React.useState(false)
-  const [waterChecked, setWaterIsChecked] = React.useState(false)
-  const [electricChecked, setElectricIsChecked] = React.useState(false)
+  const [filterState, setFilterState] = React.useReducer(
+    (state: any, newState: any) => ({...state, ...newState}),
+    {
+      // types
+      typeFlyingChecked: false,
+      typeFireChecked: false,
+      typeWaterChecked: false,
+      typeElectricChecked: false,
+
+      // weaknesses
+      weaknessFlyingChecked: false,
+      weaknessFireChecked: false,
+      weaknessWaterChecked: false,
+      weaknessElectricChecked: false
+    }
+  )
 
   //search field handle change
   const handleSearchInputChange = (event: any) => {
     const {name, value} = event.target;
 
-    if (name === "searchField") {
+    if (name === "searchField") { 
       setSearchValue(value);
     } 
   }
-
+  
   //checkbox handle change
-  //flying
-  const handleFlyingCheckBoxInputChange = (event: any) => {
+  const handleFilterState = (event: any) => {
     const {name, value} = event.target;
-
-    if (name === "flyingFilterField" && flyingChecked === false) {
-      setFlyingIsChecked(!flyingChecked);
-      setFilterValues(filterValues => [...filterValues, toTitleCase(value)]);
-    } else if (name === "flyingFilterField" && flyingChecked === true) {
-      setFlyingIsChecked(!flyingChecked);
-      setFilterValues(filterValues.filter((filterValue) => filterValue !== toTitleCase(value)))
-    }
+    
+    //update type filter values array
+    if (name.includes("type") && typeFilterValues.includes(toTitleCase(value))) {
+      //removes value from array of type values
+      setTypeFilterValues(typeFilterValues.filter((filterValue) => filterValue !== toTitleCase(value)))
+    } else if (name.includes("type") && !typeFilterValues.includes(toTitleCase(value))) {
+      //adds value from array of type values
+      setTypeFilterValues(typeFilterValues => [...typeFilterValues, toTitleCase(value)]);
+    } 
+    //update weakness filter values array
+    else if (name.includes("weakness") && weaknessFilterValues.includes(toTitleCase(value))) {
+      //removes value from array of weakness values
+      setWeaknessFilterValues(weaknessFilterValues.filter((filterValue) => filterValue !== toTitleCase(value)))
+    } else if (name.includes("weakness") && !weaknessFilterValues.includes(toTitleCase(value))) {
+      //adds value from array of weakness values
+      setWeaknessFilterValues(weaknessFilterValues => [...weaknessFilterValues, toTitleCase(value)]);
+    } 
+    
+    //update boolean
+    setFilterState({[name]: !filterState[name]})
   }
 
-  //fire
-  const handleFireCheckBoxInputChange = (event: any) => {
-    const {name, value} = event.target;
-
-    if (name === "fireFilterField" && fireChecked === false) {
-      setFireIsChecked(!fireChecked);
-      setFilterValues(filterValues => [...filterValues, toTitleCase(value)]);
-    } else if (name === "fireFilterField" && fireChecked === true) {
-      setFireIsChecked(!fireChecked);
-      setFilterValues(filterValues.filter((filterValue) => filterValue !== toTitleCase(value)))
-    }
-  }
-
-  //water
-  const handleWaterCheckBoxInputChange = (event: any) => {
-    const {name, value} = event.target;
-
-    if (name === "waterFilterField" && waterChecked === false) {
-      setWaterIsChecked(!waterChecked);
-      setFilterValues(filterValues => [...filterValues, toTitleCase(value)]);
-    } else if (name === "waterFilterField" && waterChecked === true) {
-      setWaterIsChecked(!waterChecked);
-      setFilterValues(filterValues.filter((filterValue) => filterValue !== toTitleCase(value)))
-    }
-  }
-
-  //electric
-  const handleElectricCheckBoxInputChange = (event: any) => {
-    const {name, value} = event.target;
-
-    if (name === "electricFilterField" && electricChecked === false) {
-      setElectricIsChecked(!electricChecked);
-      setFilterValues(filterValues => [...filterValues, toTitleCase(value)]);
-    } else if (name === "electricFilterField" && electricChecked === true) {
-      setElectricIsChecked(!electricChecked);
-      setFilterValues(filterValues.filter((filterValue) => filterValue !== toTitleCase(value)))
-    }
-  }  
-   
+  //handle buttons
   function pressButton() {
     setIsButtonPressed(true)
     setTimeout(() => {
@@ -135,7 +125,11 @@ const Home: React.FC<RouteComponentProps> = () => {
     setTimeout(() => {
       navigate('/pokemon', {
         state: {
-          searchValue: filterValues
+          searchValue: 
+          {
+            typeSearchValues: typeFilterValues,
+            weaknessSearchValues: weaknessFilterValues
+          }
         }
       })
     }, 300)
@@ -144,66 +138,21 @@ const Home: React.FC<RouteComponentProps> = () => {
     }, 300)
   }
 
+
+  //Review note: Made InputForm into reusable component
+  //Please see further notes / user story / acceptance criteria in README
   return (
     <Container>
-      <h1>Welcome to your Pokédex!</h1>
-      <NesButton onMouseDown={pressButton} onMouseUp={releaseButtonAll}> 
-        See All Pokemon!
-      </NesButton>
-      <br/>
-
-      <form>
-        <input
-        placeholder="Search for Pokemon here"
-        type="input"
-        name="searchField"
-        value={searchValue}
-        onChange={handleSearchInputChange}
-        />        
-      </form>
-      <NesButton onMouseDown={pressButton} onMouseUp={releaseButtonSearch}> 
-        Search
-      </NesButton>
-
-      <br/>
-
-      <form>
-        <label>Flying</label>
-        <input
-          type="checkbox"
-          name="flyingFilterField"
-          value="flying"
-          checked={flyingChecked}
-          onChange={handleFlyingCheckBoxInputChange}
-        />
-        <label>Fire</label>
-        <input
-          type="checkbox"
-          name="fireFilterField"
-          value="fire"
-          checked={fireChecked}
-          onChange={handleFireCheckBoxInputChange}
-        />
-        <label>Water</label>
-        <input
-          type="checkbox"
-          name="waterFilterField"
-          value="water"
-          checked={waterChecked}
-          onChange={handleWaterCheckBoxInputChange}
-        />
-        <label>Electric</label>
-        <input
-          type="checkbox"
-          name="electricFilterField"
-          value="electric"
-          checked={electricChecked}
-          onChange={handleElectricCheckBoxInputChange}
-        />
-      </form>
-      <NesButton onMouseDown={pressButton} onMouseUp={releaseButtonFilter}> 
-        Filter 
-      </NesButton>
+      <InputForm
+        searchValue={searchValue}
+        handleSearchInputChange={handleSearchInputChange}
+        filterState={filterState}
+        handleFilterState={handleFilterState}
+        pressButton={pressButton}
+        releaseButtonAll={releaseButtonAll}
+        releaseButtonSearch={releaseButtonSearch}
+        releaseButtonFilter={releaseButtonFilter}
+      />
 
       <Sound
         url="/audio/clickPress.mp3"
