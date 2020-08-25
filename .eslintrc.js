@@ -13,11 +13,15 @@ module.exports = {
   ],
   rules: {
     '@typescript-eslint/member-delimiter-style': [
-      'error',
+      'error', 
       {
         multiline: { delimiter: none, requireLast: false },
         singleline: { delimiter: semi, requireLast: false },
       },
+      {
+        'no-restricted-globals': ['off', 'confirm'],
+        'no-restricted-globals:0'
+      }
     ],
     '@typescript-eslint/camelcase': 0,
   },
