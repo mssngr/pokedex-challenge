@@ -3,6 +3,8 @@ import styled from 'styled-components'
 import { RouteComponentProps, Link } from '@reach/router'
 import { useQuery, gql } from '@apollo/client'
 import { Container as NesContainer } from 'nes-react'
+import SearchBar from "./SearchBar"
+
 
 const Container = styled(NesContainer)`
   && {
@@ -61,14 +63,16 @@ const Pokemon: React.FC<RouteComponentProps & { clickLink: Function }> = ({
 
   return (
     <Container rounded>
+      {/* SearchBar goes here */}
+      <SearchBar {...clickLink as any} />
       <List>
         {pokemonList.map(pokemon => (
           <Link to={pokemon.id} onMouseDown={clickLink as any}>
             <ListItem>
-              <img src={pokemon.img} />
+              <img src={pokemon.img} id={pokemon.name} />
               {pokemon.name} - {pokemon.num}
             </ListItem>
-          </Link>
+          </Link> 
         ))}
       </List>
     </Container>

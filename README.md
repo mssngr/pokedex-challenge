@@ -30,7 +30,7 @@ _Note: In order to avoid any discrepancies running the dev servers, please make 
 
 # External Libraries
 
-You are welcome to use external libraries to complete the challenge. However, please be prepared to defend your decisions and, for each library you add, write a comment in the code explaining your choice.
+You are welcome to use external libraries to complete the challenge. However, please be prepared to defend your decisions and, for each library you add, write a comment in the code explaining your choice. 
 
 # Tips
 
